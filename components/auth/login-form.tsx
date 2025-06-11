@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,6 +23,7 @@ type LoginFormValues = z.infer<typeof loginSchema>
 
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -51,7 +52,8 @@ export function LoginForm() {
         return
       }
 
-      router.push("/dashboard")
+      const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
+      router.push(callbackUrl)
       router.refresh()
     } catch (error) {
       setError("An unexpected error occurred. Please try again.")

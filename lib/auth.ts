@@ -9,7 +9,8 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 24 * 60 * 60, // 1 day
+    updateAge: 60 * 60, // 1 hour
   },
   pages: {
     signIn: "/login",
@@ -25,7 +26,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          throw new Error("Invalid credentials")
         }
 
         const user = await db.user.findUnique({
@@ -33,13 +34,13 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!user) {
-          return null
+          throw new Error("Invalid credentials")
         }
 
         const passwordValid = await compare(credentials.password, user.password)
 
         if (!passwordValid) {
-          return null
+          throw new Error("Invalid credentials")
         }
 
         return {
@@ -66,6 +67,28 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email
       }
       return session
+    },
+  },
+  events: {
+    async signIn({ user }) {
+      // Log successful sign-in
+      console.log(`User ${user.email} signed in successfully`)
+    },
+    async signOut({ token }) {
+      // Log sign-out
+      console.log(`User ${token.email} signed out`)
+    },
+  },
+  debug: process.env.NODE_ENV === "development",
+  logger: {
+    error(code, metadata) {
+      console.error(code, metadata)
+    },
+    warn(code) {
+      console.warn(code)
+    },
+    debug(code, metadata) {
+      console.debug(code, metadata)
     },
   },
 }
